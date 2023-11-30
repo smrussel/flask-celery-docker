@@ -1,0 +1,78 @@
+version: "3.8"
+
+services:
+  web:
+    build:
+      context: ./flask-docker
+      dockerfile: Dockerfile
+    command: gunicorn --workers 4 --bind 0.0.0.0:5000 --timeout 120 manage:app
+    volumes:
+      - ./flask-docker:/app
+    ports:
+      - 5000:5000
+    depends_on:
+      - redis
+    restart: always
+  
+  nginx:
+    build: ./nginx
+    environment:
+      - SERVER_NAMEE=<Sever Ip Address>
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+  redis:
+    image: redis:7.2
+    # ports:
+    #   - 6380:6380
+    restart: always
+
+  celery-worker:
+    build:
+      context: ./flask-docker
+    volumes:
+      - ./flask-docker:/app
+    environment:
+      FLASK_APP: run
+    command: celery -A manage.celery worker -B --loglevel=info
+    depends_on:
+      - redis
+    restart: always
+
+  # celery-beat:
+  #   build:
+  #     context: ./flask-docker
+  #     dockerfile: Dockerfile
+  #   command: celery -A manage.celery beat --loglevel=info 
+  #   depends_on:
+  #     - redis
+  #   restart: always
+  
+  # database-worker:
+  #   build:
+  #     context: ./flask-docker
+  #     dockerfile: Dockerfile
+  #   command: celery -A manage.celery worker --loglevel=info --queues=database_queue
+  #   depends_on:
+  #     - redis
+  #   restart: always
+
+
+  flower:
+    build:
+      context: ./flask-docker
+    volumes:
+      - ./flask-docker:/app
+    environment:
+      FLASK_APP: run
+    command: celery -A manage.celery flower --port=5555
+    depends_on:
+      - redis
+      - celery-worker
+      # - celery-beat
+    ports:
+      - "5555:5555"
+    restart: always
