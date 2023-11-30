@@ -30,4 +30,6 @@ For Production with Nginx
   docker-compose up --build -d
 ```
 
+## License
 
+The MIT License
