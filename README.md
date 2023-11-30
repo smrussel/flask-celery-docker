@@ -21,7 +21,7 @@ This sample application illustrates the creation of Celery tasks compatible with
 For Developement
 
 ```bash
-  docker-compose -f docker-compose.dev.yml up -d
+  docker-compose -f docker-compose.dev.yml up --build -d
 ```
 
 For Production with Nginx
