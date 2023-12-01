@@ -3,7 +3,7 @@ from src.models import TaskResult
 from src.extensions import db
 from celery import shared_task
 from celery.contrib.abortable import AbortableTask
-from flask import current_app
+from src import create_app
 
 @shared_task
 def hello_world():
@@ -19,9 +19,11 @@ def hello_world():
 
 @shared_task(bind=True, base=AbortableTask)
 def perform_database_operation(self,data):
-    new_record = TaskResult(result=data)
-    db.session.add(new_record)
-    db.session.commit()
+    app = create_app()
+    with app.app_context():
+        new_record = TaskResult(result=data)
+        db.session.add(new_record)
+        db.session.commit()
     print("Database operation completed successfully.")
     enqueue_another_function.apply_async(args=[data])
     for i in range(10):
